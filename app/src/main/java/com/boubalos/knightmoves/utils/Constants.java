@@ -1,4 +1,4 @@
-package com.boubalos.knightmoves;
+package com.boubalos.knightmoves.utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;

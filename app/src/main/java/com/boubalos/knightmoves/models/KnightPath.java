@@ -1,7 +1,8 @@
 package com.boubalos.knightmoves.models;
 
-public class KnightPath {
 
+public class KnightPath {
+    private final String move = "-->";
     private Position start;
     private Position firstmove;
     private Position secondmove;
@@ -12,6 +13,19 @@ public class KnightPath {
         this.firstmove = firstmove;
         this.secondmove = secondmove;
         this.thirdmove = thirdmove;
+    }
+
+
+    public String Stringify() {
+        return ""+NumToLetter(start.getY()) + (start.getX()+1) +
+                move + NumToLetter(firstmove.getY()) + (firstmove.getX()+1) +
+                move + NumToLetter(secondmove.getY()) + (secondmove.getX()+1) +
+                move + NumToLetter(thirdmove.getY()) + (thirdmove.getX()+1);
+    }
+
+    private static char NumToLetter(int i) {
+        int first = 'A';
+        return (char) (first + i);
     }
 
     public Position getStart() {

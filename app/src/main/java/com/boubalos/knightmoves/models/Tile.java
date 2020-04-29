@@ -13,6 +13,9 @@ public final class Tile {
     private final int y;
     private final int x;
     private int order = -1;
+    private int squareSize = 0;
+
+
 
     private final Paint squareColor;
     private Rect tileRect;
@@ -28,35 +31,37 @@ public final class Tile {
 
     public void draw(final Canvas canvas) {
         if (order != -1) {
+            float x = 0;
+            float y = 0;
             String text = "order : " + order;
             switch (order) {
-                case 0:{
-                    text="Start";
+                case 0: {
+                    x = tileRect.left;
+                    y = tileRect.top + (squareSize / 2);
+                    text = "Start";
                     break;
                 }
                 case 1:
-                case 2: {
-                    text = "Move :" + order;
+                case 2:
+                case 3: {
+                    x = tileRect.left + (squareSize / 3);
+                    y = tileRect.top + (squareSize / 2);
+                    text = "" + order;
                     break;
                 }
-                case 3:{
-                    text="End";
-                    break;
-                }
-            }
-            Paint paint2 = new Paint();
 
-            paint2 = new Paint();
-            paint2.setColor(Color.BLACK);
-            paint2.setTextSize(20);
-            paint2.setTextAlign(Paint.Align.LEFT);
-            float w = paint2.measureText(text) / 2;
-            float textSize = paint2.getTextSize();
+
+            }
+            Paint paint = new Paint();
+            paint = new Paint();
+            paint.setColor(Color.BLACK);
+            paint.setTextSize(squareSize / 3);
+            paint.setTextAlign(Paint.Align.LEFT);
             //set text size
             canvas.drawRect(tileRect, squareColor);
             // canvas.drawText("asdasdasdasd "+order,tileRect.left,tileRect.top, squareColor);
             //canvas.drawRect(tileRect.left-w, tileRect.top - textSize, tileRect.right + w, tileRect.bottom, squareColor);
-            canvas.drawText(text, tileRect.left + 20, tileRect.top + 20, paint2); //x=300,y=300
+            canvas.drawText(text, x, y, paint);
 
         } else
             canvas.drawRect(tileRect, squareColor);
@@ -83,46 +88,46 @@ public final class Tile {
         //  else squareColor.setColor(isDark() ? Color.BLACK : Color.WHITE);
     }
 
-    void setStartingTile() {
+    public void setStartingTile() {
         squareColor.setColor(Color.BLUE);
     }
 
-    void setEndingTile() {
+    public void setEndingTile() {
         squareColor.setColor(Color.GREEN);
     }
 
-    public String getColumnString() {
-        switch (y) {
-            case 0:
-                return "A";
-            case 1:
-                return "B";
-            case 2:
-                return "C";
-            case 3:
-                return "D";
-            case 4:
-                return "E";
-            case 5:
-                return "F";
-            case 6:
-                return "G";
-            case 7:
-                return "H";
-            default:
-                return null;
-        }
-    }
-
-    public String getRowString() {
-        // To get the actual row, add 1 since 'row' is 0 indexed.
-        return String.valueOf(x + 1);
-    }
-
-    public void handleTouch() {
-        Log.d(TAG, "handleTouch(): col: " + y);
-        Log.d(TAG, "handleTouch(): row: " + x);
-    }
+//    public String getColumnString() {
+//        switch (y) {
+//            case 0:
+//                return "A";
+//            case 1:
+//                return "B";
+//            case 2:
+//                return "C";
+//            case 3:
+//                return "D";
+//            case 4:
+//                return "E";
+//            case 5:
+//                return "F";
+//            case 6:
+//                return "G";
+//            case 7:
+//                return "H";
+//            default:
+//                return null;
+//        }
+//    }
+//
+//    public String getRowString() {
+//        // To get the actual row, add 1 since 'row' is 0 indexed.
+//        return String.valueOf(x + 1);
+//    }
+//
+//    public void handleTouch() {
+//        Log.d(TAG, "handleTouch(): col: " + y);
+//        Log.d(TAG, "handleTouch(): row: " + x);
+//    }
 
     public boolean isDark() {
         return (y + x) % 2 == 0;
@@ -136,11 +141,14 @@ public final class Tile {
         this.tileRect = tileRect;
     }
 
-    public String toString() {
-        final String column = getColumnString();
-        final String row = getRowString();
-        return "<Tile " + column + row + ">";
+//    public String toString() {
+//        final String column = getColumnString();
+//        final String row = getRowString();
+//        return "<Tile " + column + row + ">";
+//    }
+
+
+    public void setSquareSize(int squareSize) {
+        this.squareSize = squareSize;
     }
-
-
 }

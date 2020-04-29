@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">KnightMoves</string>
+    <string name="select_starting_tile">Select a tile for the knight to start at</string>
+    <string name="select_ending_tile">Select the tile you the Knight to end up in</string>
+    <string name="no_paths_found">Knight can\'t go there in 3 moves</string>
+    <string name="paths_found">Knight can get there in </string>
+    <string name="refresh_plz">Refresh the board if you want to select different starting and ending tiles</string>
 </resources>

@@ -1,4 +1,4 @@
-package com.boubalos.knightmoves.models;
+package com.boubalos.knightmoves.views;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -9,6 +9,9 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.boubalos.knightmoves.models.KnightPath;
+import com.boubalos.knightmoves.models.Position;
+import com.boubalos.knightmoves.models.Tile;
 import com.boubalos.knightmoves.utils.KnightMoveUtils;
 import com.boubalos.knightmoves.utils.SharedPrefsUtils;
 
@@ -26,24 +29,24 @@ public class ChessBoard extends View {
     private List<Position> pointsList2;
     private List<Position> pointsList1;
 
-    Position startingPoint;
-    Position endingPoint;
-    List<KnightPath> paths;
-    int index = 0;
-    Tile tile;
-    private final Tile[][] mTiles;
+    private Position startingPoint;
+    private Position endingPoint;
+    private List<KnightPath> paths;
+    private Tile[][] mTiles;
     private int x0 = 0;
     private int y0 = 0;
     private int squareSize = 0;
     private boolean flipped = false;
-    int width, height;
-    int size;
+    private int width, height;
+    private int size;
+    private Context context;
 
     ChessBoardInterface chessBoardInterface;
 
     public ChessBoard(final Context context, AttributeSet attrs) {
         super(context, attrs);
-        size = SharedPrefsUtils.getBoardSize();
+        this.context = context;
+        size = SharedPrefsUtils.getBoardSize(context);
         this.mTiles = new Tile[size][size];
         buildTiles();
         rect = new Rect();
@@ -54,6 +57,7 @@ public class ChessBoard extends View {
     }
 
     private void buildTiles() {
+        mTiles = new Tile[size][size];
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
                 mTiles[x][y] = new Tile(x, y);
@@ -80,6 +84,7 @@ public class ChessBoard extends View {
                 rect.top = yCoord;
                 rect.right = rect.left + squareSize;  // right
                 rect.bottom = rect.top + squareSize;
+                mTiles[x][y].setSquareSize(squareSize);
                 mTiles[x][y].draw(canvas);
             }
         }
@@ -142,19 +147,14 @@ public class ChessBoard extends View {
     }
 
     void resetTiles() {
-
-        for (int x = 0; x < size; x++) {
-            for (int y = 0; y < size; y++) {
-                mTiles[x][y].setSelected(false);
-            }
-        }
-
+        buildTiles();
+        invalidate();
     }
 
     public void resetBoard() {
-        resetTiles();
+        size = SharedPrefsUtils.getBoardSize(context);
+        buildTiles();
         state = IDLE;
-        index=0;
         invalidate();
     }
 
@@ -168,32 +168,34 @@ public class ChessBoard extends View {
             float screenY = width - event.getY();
             int selectedX = (int) screenX / getSquareSizeWidth(width);
             int selectedY = (int) screenY / getSquareSizeHeight(height);
+            if (selectedX >= size)
+                selectedX = size - 1;
+            if (selectedY >= size)
+                selectedY = size - 1;
             Log.i(TAG, width + "/" + height + "/////" + selectedX + "/" + selectedY);
             switch (state) {
                 case IDLE: {
-                    resetTiles();
                     mTiles[selectedX][selectedY].setStartingTile();
-                    pointsList2 = KnightMoveUtils.Calc2ndLvLPositions(selectedX, selectedY);
-//                    for (Lvl2position position : pointsList2) {
-//                        mTiles[position.getX()][position.getY()].setSelected(true);
-//                    }
+                    pointsList2 = KnightMoveUtils.Calc2ndLvLPositions(selectedX, selectedY, size);
                     state = STARTING_POINT_SELECTED;
                     startingPoint = new Position(selectedX, selectedY);
                     invalidate();
+                    chessBoardInterface.StartingPointSelected();
                     return true;
                 }
                 case STARTING_POINT_SELECTED: {
                     pointsList1 = KnightMoveUtils.Calc1rstLvLPositions(selectedX, selectedY);
-//                    for (Lvl1position position : pointsList1) {
-//                        mTiles[position.getX()][position.getY()].setSelected2(true);
-//                    }
                     mTiles[selectedX][selectedY].setEndingTile();
                     state = ENDING_POINT_SELECTED;
                     endingPoint = new Position(selectedX, selectedY);
-                    paths = KnightMoveUtils.findPaths(pointsList1, pointsList2,startingPoint,endingPoint);
-                    if (paths.size() != 0) chessBoardInterface.PathsFound(paths.size());
+                    paths = KnightMoveUtils.findPaths(pointsList1, pointsList2, startingPoint, endingPoint, size);
+                    if (paths.size() != 0) chessBoardInterface.PathsFound(paths);
                     else chessBoardInterface.noPathsFound();
                     invalidate();
+                    return true;
+                }
+                case ENDING_POINT_SELECTED: {
+                    chessBoardInterface.PointsAlreadySelected();
                     return true;
                 }
 
@@ -202,39 +204,47 @@ public class ChessBoard extends View {
         return false;
     }
 
-
-    public void renderPaths() {
-        state = RENDERING_IN_PROGRESS;
-        if (paths.size() > 0) {
-            resetTiles();
-            KnightPath path = paths.get(index);
-            Log.d(TAG, "RENDERING PATH : "+path.getStart().toString()+"|"+path.getFirstmove().toString()+"|"+path.getSecondmove().toString()+"|"+path.getThirdmove().toString());
-            mTiles[path.getStart().getX()][path.getStart().getY()].setStartingTile();
-            mTiles[path.getStart().getX()][path.getStart().getY()].setOrder(0);
-            mTiles[path.getThirdmove().getX()][path.getThirdmove().getY()].setEndingTile();
-            mTiles[path.getThirdmove().getX()][path.getThirdmove().getY()].setOrder(3);
-            mTiles[path.getFirstmove().getX()][path.getFirstmove().getY()].setYellow(true);
-            mTiles[path.getFirstmove().getX()][path.getFirstmove().getY()].setOrder(1);
-            mTiles[path.getSecondmove().getX()][path.getSecondmove().getY()].setSelected(true);
-            mTiles[path.getSecondmove().getX()][path.getSecondmove().getY()].setOrder(2);
-            invalidate();
-            state = ENDING_POINT_SELECTED;
-            if (index == paths.size() - 1)
-                index = 0;
-            else index++;
-        } else {
-            chessBoardInterface.noPathsFound();
+    public void renderPath(int index) {
+        if (state == ENDING_POINT_SELECTED) {
+            state = RENDERING_IN_PROGRESS;
+            if (paths.size() > 0) {
+                resetTiles();
+                KnightPath path = paths.get(index);
+                Log.d(TAG, "RENDERING PATH : " + path.getStart().toString() + "|" + path.getFirstmove().toString() + "|" + path.getSecondmove().toString() + "|" + path.getThirdmove().toString());
+                mTiles[path.getStart().getX()][path.getStart().getY()].setStartingTile();
+                mTiles[path.getStart().getX()][path.getStart().getY()].setOrder(0);
+                mTiles[path.getThirdmove().getX()][path.getThirdmove().getY()].setEndingTile();
+                mTiles[path.getThirdmove().getX()][path.getThirdmove().getY()].setOrder(3);
+                mTiles[path.getFirstmove().getX()][path.getFirstmove().getY()].setYellow(true);
+                mTiles[path.getFirstmove().getX()][path.getFirstmove().getY()].setOrder(1);
+                mTiles[path.getSecondmove().getX()][path.getSecondmove().getY()].setSelected(true);
+                mTiles[path.getSecondmove().getX()][path.getSecondmove().getY()].setOrder(2);
+                invalidate();
+                state = ENDING_POINT_SELECTED;
+                if (index == paths.size() - 1)
+                    index = 0;
+                else index++;
+            } else {
+                chessBoardInterface.noPathsFound();
+            }
         }
-
     }
 
+
+    public void setBoardSize(int size) {
+        this.size = size;
+        resetBoard();
+    }
 
 
     public interface ChessBoardInterface {
         void noPathsFound();
 
-        void PathsFound(int i);
-    }
+        void StartingPointSelected();
 
+        void PointsAlreadySelected();
+
+        void PathsFound(List<KnightPath> paths);
+    }
 
 }
